@@ -88,8 +88,6 @@ var responseProcessor = require('utils').response;
             am.create(asset);
         } catch (e) {
             log.error('Asset of type: ' + options.type + ' was not created due to ' + e);
-            //res.sendError(500, 'Failed to create asset of type: ' + options.type);
-            //result = responseProcessor.buildErrorResponse(500, 'Failed to create asset of type: ' + options.type);
             print(responseProcessor.buildErrorResponse(500, 'Failed to create asset of type: ' + options.type));
             return null;
         }
@@ -114,10 +112,20 @@ var responseProcessor = require('utils').response;
         putInStorage(options, asset, am, req, session);
         var original = am.get(options.id);
         putInOldResources(original, asset, am);
-        //If the user has not uploaded any new resources then use the old resources   
-        am.update(asset);
+        //If the user has not uploaded any new resources then use the old resources 
+        try{
+            am.update(asset);
+        }
+        catch(e){
+            log.debug('Failed to update the asset '+stringify(asset));
+            log.debug(e);
+            asset=null; 
+        }
+        
+        return asset;
     };;
     api.search = function(options, req, res, session) {
+        var asset = require('rxt').asset;
         var assetManager = asset.createUserAssetManager(session, options.type);
         var sort = (request.getParameter("sort") || '');
         var sortOrder = DEFAULT_PAGIN.sortOrder;
@@ -174,7 +182,7 @@ var responseProcessor = require('utils').response;
     };
 
     api.get = function(options, req, res, session) {
-        
+        var asset = require('rxt').asset;
         var assetManager = asset.createUserAssetManager(session, options.type);
         try {
             var retrievedAsset = assetManager.get(options.id);
