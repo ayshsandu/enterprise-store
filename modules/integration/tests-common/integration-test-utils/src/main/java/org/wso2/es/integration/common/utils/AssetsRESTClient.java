@@ -21,27 +21,36 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import org.apache.log4j.Logger;
 
-import java.io.*;
-import java.net.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
 
 public class AssetsRESTClient extends ESIntegrationTest {
-    private String username = "admin";
-    private String password = "admin";
     private URLConnection urlConn;
-    private DataOutputStream printout;
-    private DataInputStream input;
-    private String baseURL = "https://localhost:9443";
-    private static final Logger log = Logger.getLogger(AssetsRESTClient.class);
+    private URL endpointUrl;
+
+//    private DataOutputStream printout;
+//    private DataInputStream input;
+
     private StringBuilder response = null;
     private String endpoint;
-    private URL endpointUrl;
+    private String baseURL = "https://localhost:9443";
+    private String username = "admin";
+    private String password = "admin";
+
     private JsonParser parser;
     private JsonElement elem;
+
     private static int defaultPageSize = 12;
+    private static final Logger log = Logger.getLogger(AssetsRESTClient.class);
 
     /**
      * This methods make a call to ES-Publisher REST API and obtain a sessionID
-     * @return
+     * @return SessionId for the authenticated user
      */
     private String getSessionID() {
         String sessionID = null;
@@ -56,7 +65,7 @@ public class AssetsRESTClient extends ESIntegrationTest {
             urlConn.setRequestProperty
                     ("Content-Type", "application/x-www-form-urlencoded");
             // Send POST output.
-            printout = new DataOutputStream(urlConn.getOutputStream());
+            DataOutputStream printout = new DataOutputStream(urlConn.getOutputStream());
             String content =
                     "username=" + URLEncoder.encode(username) +
                             "&password=" + URLEncoder.encode(password);
@@ -64,7 +73,7 @@ public class AssetsRESTClient extends ESIntegrationTest {
             printout.flush();
             printout.close();
             // Get response data.
-            input = new DataInputStream(urlConn.getInputStream());
+            DataInputStream input = new DataInputStream(urlConn.getInputStream());
             String str;
             response = new StringBuilder();
             while (null != ((str = input.readLine()))) {
@@ -75,18 +84,20 @@ public class AssetsRESTClient extends ESIntegrationTest {
             sessionID = elem.getAsJsonObject().getAsJsonObject("data").get("sessionId").toString();
             input.close();
         } catch (MalformedURLException e) {
-            log.error(e);
+            log.error("MalformedURLException Error while login ", e);
         } catch (IOException e) {
-            log.error(e);
+            log.error("IOException Error while login ", e);
         } catch (Exception e) {
-            log.error(e);
+            log.error("Error while login ", e);
         }
         return sessionID;
     }
 
     private JsonArray getData(String sessionId) {
         try {
-            log.info("###### Get Assets via rest endpoint ######");
+            if (log.isDebugEnabled()) {
+                log.debug("###### Get Assets via REST endpoint ######");
+            }
             endpoint = baseURL + "/publisher/apis/assets?type=gadget";//endpoint list assets
             endpointUrl = new URL(endpoint);
             urlConn = endpointUrl.openConnection();
@@ -94,7 +105,7 @@ public class AssetsRESTClient extends ESIntegrationTest {
             // SessionId Cookie
             urlConn.connect();
             //GET response data
-            input = new DataInputStream(urlConn.getInputStream());
+            DataInputStream input = new DataInputStream(urlConn.getInputStream());
             response = new StringBuilder();
             String str;
             while (null != ((str = input.readLine()))) {
@@ -103,16 +114,15 @@ public class AssetsRESTClient extends ESIntegrationTest {
             input.close();
             parser = new JsonParser();
             elem = parser.parse(response.toString());
-            JsonArray assets = elem.getAsJsonObject().getAsJsonArray("data");
             // parse response to a JasonArray
-            return assets;
+            return elem.getAsJsonObject().getAsJsonArray("data");
 
         } catch (MalformedURLException e) {
-            log.error(e);
+            log.error("MalformedURLException Error while retrieving assets ", e);
         } catch (IOException e) {
-            log.error(e);
+            log.error("IOException Error while retrieving assets ", e);
         } catch (Exception e) {
-            log.error(e);
+            log.error("Error while retrieving assets ", e);
         }
         return null;
     }
@@ -129,23 +139,20 @@ public class AssetsRESTClient extends ESIntegrationTest {
             urlConn.setRequestProperty("Cookie", "JSESSIONID=" + sessionId + ";");
             //send SessionId Cookie
             // Send POST output.
-            printout = new DataOutputStream(urlConn.getOutputStream());
-//            String content =
-//                    "username=" + URLEncoder.encode(username) +
-//                            "&password=" + URLEncoder.encode(password);
-//            printout.writeBytes(content);
+            DataOutputStream printout = new DataOutputStream(urlConn.getOutputStream());
+
             printout.flush();
             printout.close();
             // Get response data.
-            input = new DataInputStream(urlConn.getInputStream());
-            String str;
-            input.close();
+//            input = new DataInputStream(urlConn.getInputStream());
+//            String str;
+//            input.close();
         } catch (MalformedURLException e) {
-            log.error(e);
+            log.error("MalformedURLException Error while logout ", e);
         } catch (IOException e) {
-            log.error(e);
+            log.error("IOException Error while logout ", e);
         } catch (Exception e) {
-            log.error(e);
+            log.error("Error while logout ", e);
         }
     }
 
