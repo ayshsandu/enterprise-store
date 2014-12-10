@@ -16,6 +16,8 @@
 
 package org.wso2.es.ui.integration.util;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.openqa.selenium.Alert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoAlertPresentException;
@@ -32,13 +34,26 @@ import static org.testng.Assert.fail;
  * test cases
  */
 public abstract class BaseUITestCase extends ESIntegrationUITest {
+
+    private static final Log LOG = LogFactory.getLog(BaseUITestCase.class);
     protected ESWebDriver driver;
     protected String baseUrl;
     protected String backendURL;
     protected WebDriverWait wait;
     protected boolean acceptNextAlert = true;
-    protected String publisherApp = "publisher";
-    protected String storeApp = "store";
+
+    protected static final String PRODUCT_GROUP_NAME = "ES";
+    protected static final String PUBLISHER_APP = "publisher";
+    protected static final String STORE_APP = "store";
+    protected static final String STORE_URL = "/store";
+    protected static final String PUBLISHER_URL = "/publisher";
+    protected static final String MANAGEMENT_CONSOLE_URL = "/carbon/";
+    protected static final String PUBLISHER_LOGOUT_URL = "/publisher/logout";
+    protected static final String STORE_LOGOUT_URL = "/store/logout";
+    protected static final String PUBLISHER_GADGET_LIST_PAGE = "/publisher/asts/gadget/list";
+    protected static final String STORE_GADGET_LIST_PAGE = "/store/asts/gadget/list";
+    protected static final String STORE_TOP_ASSETS_PAGE = "/store/pages/top-assets";
+    protected static final String GADGET_REGISTRY_BASE_PATH = "/_system/governance/gadgets/";
 
     protected String currentUserName;
     protected String currentUserPwd;
@@ -53,6 +68,7 @@ public abstract class BaseUITestCase extends ESIntegrationUITest {
 
     /**
      * This method check whether the given element is present in the current driver instance
+     *
      * @param by By element to be present
      * @return boolean true/false
      */
@@ -61,12 +77,14 @@ public abstract class BaseUITestCase extends ESIntegrationUITest {
             driver.findElement(by);
             return true;
         } catch (NoSuchElementException e) {
+            LOG.error("Requested element is not present", e);
             return false;
         }
     }
 
     /**
      * This method check whether a alert is present
+     *
      * @return boolean true/false
      */
     protected boolean isAlertPresent() {
@@ -74,12 +92,14 @@ public abstract class BaseUITestCase extends ESIntegrationUITest {
             driver.switchTo().alert();
             return true;
         } catch (NoAlertPresentException e) {
+            LOG.error("No alert found", e);
             return false;
         }
     }
 
     /**
      * This method close the alert and return its text
+     *
      * @return String - the text of the alert
      */
     protected String closeAlertAndGetItsText() {
@@ -99,14 +119,15 @@ public abstract class BaseUITestCase extends ESIntegrationUITest {
 
     /**
      * This method helps to use alerts even if the earlier asserts in the same test case fails
-     * @param verificationErrors
+     *
+     * @param verificationErrors error string
      * @return new verificationErrors buffer
      */
-    protected StringBuffer failOnError(StringBuffer verificationErrors) {
+    protected StringBuilder failOnError(StringBuilder verificationErrors) {
         String verificationErrorString = verificationErrors.toString();
-        StringBuffer errorBuffer = verificationErrors;
+        StringBuilder errorBuffer = verificationErrors;
         if (!"".equals(verificationErrorString)) {
-            errorBuffer = new StringBuffer();
+            errorBuffer = new StringBuilder();
             fail(verificationErrorString);
         }
         return errorBuffer;

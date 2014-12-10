@@ -16,57 +16,96 @@
 
 package org.wso2.es.ui.integration.util;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.openqa.selenium.By;
 import org.wso2.es.integration.common.utils.ESIntegrationUITest;
-
 import javax.mail.*;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
 
+/**
+ * Contains utility methods for ES operations
+ */
 public class ESUtil extends ESIntegrationUITest {
-    private static String publisherSuffix = "/publisher";
-    private static String storeSuffix = "/store";
-    private static String adminConsoleSuffix = "/carbon/admin/index.jsp";
 
-    public static void login(ESWebDriver driver, String url, String webApp,
-                             String userName, String pwd) throws XPathExpressionException {
+    private static final Log LOG = LogFactory.getLog(ESUtil.class);
+    private static final String PUBLISHER_SUFFIX = "/publisher";
+    private static final String STORE_SUFFIX = "/store";
+    private static final String ADMIN_CONSOLE_SUFFIX = "/carbon/admin/index.jsp";
+    private static final int MAIL_WAIT_TIME = 2000;
+    private static final int MAX_POLL_COUNT = 30;
+    private static final int MAX_MAIL_POLL = 20;
+    private static final String IMAPS = "imaps";
+    public static final String SMTP_GMAIL_COM = "smtp.gmail.com";
+    public static final String INBOX = "inbox";
 
-        if (webApp.equalsIgnoreCase("store")) {
-            url = url + storeSuffix;
-            driver.get(url);
+    /**
+     * To login to store or publisher
+     *
+     * @param driver   WebDriver instance
+     * @param url      base url of the server
+     * @param webApp   store or publisher
+     * @param userName user name
+     * @param pwd      password
+     * @throws XPathExpressionException
+     */
+    public static void login(ESWebDriver driver, String url, String webApp, String userName, String pwd) throws XPathExpressionException {
+        String fullUrl = "";
+        if ("store".equalsIgnoreCase(webApp)) {
+            fullUrl = url + STORE_SUFFIX;
+            driver.get(fullUrl);
             driver.findElement(By.partialLinkText("Sign in")).click();
 
-        } else if (webApp.equalsIgnoreCase("publisher")) {
-            url = url + publisherSuffix;
-            driver.get(url);
+        } else if ("publisher".equalsIgnoreCase(webApp)) {
+            fullUrl = url + PUBLISHER_SUFFIX;
+            driver.get(fullUrl);
         }
-        driver.findElementPoll(By.id("username"), 30);
+        driver.findElementPoll(By.id("username"), MAX_POLL_COUNT);
         driver.findElement(By.id("username")).clear();
         driver.findElement(By.id("username")).sendKeys(userName);
         driver.findElement(By.id("password")).clear();
         driver.findElement(By.id("password")).sendKeys(pwd);
         driver.findElement(By.xpath("//button[@type='submit']")).click();
-        driver.get(url);
+        driver.get(fullUrl);
     }
 
-    public static void logout(ESWebDriver driver, String url, String webApp,
-                              String userName) throws XPathExpressionException {
-        if (webApp.equalsIgnoreCase("store")) {
-            url = url + storeSuffix;
-        } else if (webApp.equalsIgnoreCase("publisher")) {
-            url = url + publisherSuffix;
+    /**
+     * To logout from store and publisher
+     *
+     * @param driver   WebDriver instance
+     * @param url      base url of the server
+     * @param webApp   store or publisher
+     * @param userName user name
+     * @throws XPathExpressionException
+     */
+    public static void logout(ESWebDriver driver, String url, String webApp, String userName) throws XPathExpressionException {
+        String fullUrl = "";
+        if ("store".equalsIgnoreCase(webApp)) {
+            fullUrl = url + STORE_SUFFIX;
+        } else if ("publisher".equalsIgnoreCase(webApp)) {
+            fullUrl = url + PUBLISHER_SUFFIX;
         }
-        driver.get(url);
+        driver.get(fullUrl);
         driver.findElement(By.linkText(userName)).click();
         driver.findElement(By.linkText("Sign out")).click();
     }
 
-    public static void loginToAdminConsole(ESWebDriver driver, String url, String userName,
-                                           String pwd) throws XPathExpressionException {
-        driver.get(url + adminConsoleSuffix);
+    /**
+     * To login to admin console
+     *
+     * @param driver   WebDriver instance
+     * @param url      base url of the server
+     * @param userName user name
+     * @param pwd      password
+     * @throws XPathExpressionException
+     */
+    public static void loginToAdminConsole(ESWebDriver driver, String url, String userName, String pwd) throws XPathExpressionException {
+        driver.get(url + ADMIN_CONSOLE_SUFFIX);
         driver.findElement(By.id("txtUserName")).clear();
         driver.findElement(By.id("txtUserName")).sendKeys(userName);
         driver.findElement(By.id("txtPassword")).clear();
@@ -74,22 +113,38 @@ public class ESUtil extends ESIntegrationUITest {
         driver.findElement(By.cssSelector("input.button")).click();
     }
 
+    /**
+     * To logout from admin console
+     *
+     * @param driver WebDriver instance
+     * @param url    base url of the server
+     */
     public static void logoutFromAdminConsole(ESWebDriver driver, String url) {
-        driver.get(url + adminConsoleSuffix);
+        driver.get(url + ADMIN_CONSOLE_SUFFIX);
         driver.findElement(By.linkText("Sign-out")).click();
     }
 
+    /**
+     * Set up user profile
+     *
+     * @param driver    WebDriver instance
+     * @param url       base url of the server
+     * @param userName  user name
+     * @param firstName first name
+     * @param lastName  last name
+     * @param email     email
+     */
     public static void setupUserProfile(ESWebDriver driver, String url, String userName,
                                         String firstName, String lastName, String email) {
         String userProfileElement;
-        if (userName.equals("admin")) {
+        if ("admin".equals(userName)) {
             userProfileElement = "//a[contains(text(),'User\n                                    " +
                     "                                                        Profile')]";
         } else {
             userProfileElement = "(//a[contains(text(),'User\n                                   " +
                     "                                                         Profile')])[2]";
         }
-        driver.get(url + adminConsoleSuffix);
+        driver.get(url + ADMIN_CONSOLE_SUFFIX);
         driver.findElement(By.cssSelector("#menu-panel-button3 > span")).click();
         driver.findElement(By.linkText("Users and Roles")).click();
         driver.findElement(By.linkText("Users")).click();
@@ -105,56 +160,70 @@ public class ESUtil extends ESIntegrationUITest {
         driver.findElement(By.cssSelector("#menu-panel-button1 > span")).click();
     }
 
+    /**
+     * To check if a e-mail exists with a given subject
+     *
+     * @param smtpPropertyFile smtp property file path
+     * @param password         password
+     * @param email            email address
+     * @param subject          email subject
+     * @return if the mail exist
+     * @throws IOException
+     * @throws MessagingException
+     * @throws InterruptedException
+     */
     public static boolean containsEmail(String smtpPropertyFile, String password, String email,
-                                        String subject) throws IOException, MessagingException,
-            InterruptedException {
+                                        String subject) throws MessagingException, InterruptedException, IOException {
         Properties props = new Properties();
         boolean hasEmail = false;
-        int maxPollCount = 20;
         int pollCount = 0;
-        props.load(new FileInputStream(new File(smtpPropertyFile)));
-        Session session = Session.getDefaultInstance(props, null);
-        Store store = session.getStore("imaps");
-        store.connect("smtp.gmail.com", email, password);
-        Folder inbox = store.getFolder("inbox");
-        inbox.open(Folder.READ_ONLY);
+        Folder inbox = null;
+        Store store = null;
+        String errorMessage = "Retrieving mails for: " + email + "failed";
+        try {
+            props.load(new FileInputStream(new File(smtpPropertyFile)));
+            Session session = Session.getDefaultInstance(props, null);
+            store = session.getStore(IMAPS);
+            store.connect(SMTP_GMAIL_COM, email, password);
+            inbox = store.getFolder(INBOX);
+            inbox.open(Folder.READ_ONLY);
 
-        while ((pollCount <= maxPollCount) && !hasEmail) {
-            Message[] messages = inbox.getMessages();
-            for (Message msg : messages) {
-                if (subject.equals(msg.getSubject())) {
-                    hasEmail = true;
-                    break;
+            while ((pollCount <= MAX_MAIL_POLL) && !hasEmail) {
+                Message[] messages = inbox.getMessages();
+                for (Message msg : messages) {
+                    if (subject.equals(msg.getSubject())) {
+                        hasEmail = true;
+                        break;
+                    }
+                }
+                Thread.sleep(MAIL_WAIT_TIME);
+            }
+        } catch (MessagingException e) {
+            LOG.error(errorMessage, e);
+            throw e;
+        } catch (InterruptedException e) {
+            LOG.error(errorMessage, e);
+            throw e;
+        } catch (FileNotFoundException e) {
+            LOG.error(errorMessage, e);
+            throw e;
+        } catch (IOException e) {
+            LOG.error(errorMessage, e);
+            throw e;
+        } finally {
+            if (inbox != null) {
+                try {
+                    inbox.close(true);
+                } catch (MessagingException e) {
                 }
             }
-            Thread.sleep(2000);
+            if (store != null) {
+                try {
+                    store.close();
+                } catch (MessagingException e) {
+                }
+            }
         }
-        inbox.close(true);
-        store.close();
         return hasEmail;
     }
-
-    public static void deleteAllEmail(String smtpPropertyFile, String password,
-                                      String email) throws IOException, MessagingException {
-        Properties props = new Properties();
-        props.load(new FileInputStream(new File(smtpPropertyFile)));
-        Session session = Session.getDefaultInstance(props, null);
-
-        Store store = session.getStore("imaps");
-        store.connect("smtp.gmail.com", email, password);
-
-        Folder inbox = store.getFolder("inbox");
-        inbox.open(Folder.READ_WRITE);
-        int messageCount = inbox.getMessageCount();
-
-        Message[] messages = inbox.getMessages();
-
-        for (int i = 0; i < messageCount; i++) {
-            messages[i].setFlag(Flags.Flag.DELETED, true);
-        }
-        inbox.close(true);
-        store.close();
-    }
-
-
 }
