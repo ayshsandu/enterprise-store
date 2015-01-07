@@ -29,6 +29,7 @@ var apiEndpoint = '/{context}/t/{domain}/asts/{type}/api/{+suffix}';
 var assetEndpoint = '/{context}/t/{domain}/asts/{type}/{+suffix}';
 var pageEndpoint = '/{context}/t/{domain}/pages/{+suffix}';
 var storageEndpoint = '/{context}/t/{domain}/storage/{+suffix}';
+var loginEndpoiint = '/{context}/t/{domain}/login';
 
 if (matcher.match(apiEndpoint)) {
     loadTenant(matcher.elements().domain);
@@ -42,14 +43,16 @@ if (matcher.match(apiEndpoint)) {
 } else if (matcher.match(storageEndpoint)) {
     loadTenant(matcher.elements().domain);
     include('routers/storage_router.jag');
-}
-else {
+} else if (matcher.match(loginEndpoiint)) {
+    loadTenant(matcher.elements().domain);
+    include('/controllers/login.jag');
+} else {
     include('index.jag');
-   // response.sendError(404, 'Unable to route the request to an appropriate endpoint');
+    // response.sendError(404, 'Unable to route the request to an appropriate endpoint');
 }
 
 function loadTenant(domain) {
-    var tenantId =  carbon.server.tenantId({domain: domain});
+    var tenantId = carbon.server.tenantId({domain: domain});
     var configs = core.configs(tenantId);
     if (!configs.appResources) {
         var event = require('event');
