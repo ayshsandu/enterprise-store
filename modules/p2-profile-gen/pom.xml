@@ -351,6 +351,10 @@
                                 <featureArtifactDef>
                                     org.wso2.carbon.identity:org.wso2.carbon.identity.notification.mgt.feature:${carbon.identity.version}
                                 </featureArtifactDef>
+                                <featureArtifactDef>org.wso2.carbon.store:carbon-metrics.feature:${carbon.store.version}
+                                </featureArtifactDef>
+                                <featureArtifactDef>org.wso2.carbon.metrics:org.wso2.carbon.metrics.feature:${carbon.metrics.version}
+                                </featureArtifactDef>
                             </featureArtifacts>
                         </configuration>
                     </execution>
@@ -454,6 +458,14 @@
                                 <feature>
                                     <id>org.wso2.store.modules.rxt.feature.group</id>
                                     <version>${carbon.store.version}</version>
+                                </feature>
+                                <feature>
+                                    <id>org.wso2.store.modules.carbon-metrics.feature.group</id>
+                                    <version>${carbon.store.version}</version>
+                                </feature>
+                                <feature>
+                                    <id>org.wso2.carbon.metrics.feature.group</id>
+                                    <version>${carbon.metrics.version}</version>
                                 </feature>
                                 <feature>
                                     <id>org.wso2.store.modules.utils.feature.group</id>
