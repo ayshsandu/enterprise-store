@@ -671,7 +671,7 @@
         <carbon.dashboards.version>1.0.0</carbon.dashboards.version>
         <product.es.version>2.0.1-SNAPSHOT</product.es.version>
 
-        <test.framework.version>4.4.2</test.framework.version>
+        <test.framework.version>4.4.3</test.framework.version>
         <automation.utils.version>4.4.2</automation.utils.version>
         <ciphertool.version>1.0.0-wso2v3</ciphertool.version>
 
@@ -733,5 +733,6 @@
         <commons-io.version>2.2</commons-io.version>
         <google.guava.version>16.0.1</google.guava.version>
         <testng.version>6.8.5</testng.version>
+        <carbon.metrics.version>1.2.1</carbon.metrics.version>
     </properties>
 </project>
